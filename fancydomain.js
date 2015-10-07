@@ -1,43 +1,20 @@
-(function( window ) {
+(function( Fancy ) {
     "use strict";
-
-
-    extend( Function.prototype, (function() {
-        var slice = Array.prototype.slice;
-
-
-        function argumentNames() {
-            var names = this.toString().match( /^[\s\(]*function[^(]*\(([^)]*)\)/ )[ 1 ]
-                .replace( /\/\/.*?[\r\n]|\/\*(?:.|[\r\n])*?\*\//g, '' )
-                .replace( /\s+/g, '' ).split( ',' );
-            return names.length == 1 && !names[ 0 ] ? [] : names;
-        }
-
-        function wrap( wrapper ) {
+    extend( Function.prototype, {
+        wrap: function wrap( wrapper ) {
             var fn = this;
             return function() {
-                return wrapper.apply( this, [ fn.bind( this ) ].concat( slice.call( arguments ) ) );
+                return wrapper.apply( this, [ fn.bind( this ) ].concat( Array.prototype.slice.call( arguments ) ) );
             }
         }
+    } );
 
-        return {
-            argumentNames: argumentNames,
-            wrap         : wrap
-        };
-    })() );
-
-
-    function $A( a ) {
-        var args = [];
-        for( var i in a ) {
-            if( parseInt( i ) )
-                args.push( a[ i ] );
-        }
-        return args;
+    function argumentToArray( a ) {
+        return Array.prototype.slice.call( a );
     }
 
     function addMethods( functions, fn ) {
-        var $super   = fn.parent && fn.parent.prototype;
+        var $super = fn.parent && fn.parent.prototype;
         each( functions, function( value, property ) {
             if( $super && typeof value === "function" ) {
                 var method = value;
@@ -78,7 +55,7 @@
     }
 
     function extend( a ) {
-        var args = $A( arguments );
+        var args = argumentToArray( arguments );
         each( args, function( it ) {
             for( var i in it ) {
                 a[ i ] = it[ i ];
@@ -89,7 +66,7 @@
 
     function Subclass() {}
 
-    function Class( name, data, options, functions ) {
+    function Domain( name, data, options, functions ) {
         var parent = null;
         if( typeof name === "function" ) {
             parent = name;
@@ -103,9 +80,9 @@
                 options   = null;
             }
         }
-        Superclass.parent      = parent;
-        Superclass.subclasses  = [];
-        Superclass.$properties = {};
+        Superclass.parent                = parent;
+        Superclass.subclasses            = [];
+        Superclass.$properties           = {};
 
         each( data, function( it, i ) {
             if( typeof it === "string" ) {
@@ -156,46 +133,5 @@
         return Superclass;
     }
 
-    window.Class = Class;
-})
-( window );
-
-
-var Person = Class( {
-    lastName : "string",
-    firstName: "string"
-}, {
-    fullName: function() {
-        return this.firstName + " " + this.lastName;
-    },
-    test    : function() {
-        return "test";
-    }
-} );
-var Child  = Class( Person, {
-    taschengeld: "number"
-}, {}, {
-    fullName: function( $super ) {
-        return this.firstName;
-    }
-} );
-var Baby   = Class( Child, {
-    weight: "number"
-}, {}, {
-    fullName: function( $super ) {
-        return "unknown";
-    }
-} );
-
-var me  = new Person( {
-    lastName : "Ahrweiler",
-    firstName: "Markus"
-} );
-var meC = new Child( {
-    lastName : "Ahrweiler",
-    firstName: "Markus"
-} );
-var meB = new Baby( {
-    lastName : "Ahrweiler",
-    firstName: "Markus"
-} );
+    Fancy.domain = Domain;
+})( Fancy );

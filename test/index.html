@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <script src="../bower_components/fancy/fancy.min.js"></script>
+        <script src="../fancydomain.js"></script>
+        <title></title>
+    </head>
+    <body>
+
+        <script>
+            var Person = Fancy.domain( {
+                lastName : "string",
+                firstName: "string"
+            }, {
+                fullName: function() {
+                    return this.firstName + " " + this.lastName;
+                },
+                test    : function() {
+                    return "test";
+                }
+            } );
+            var Child = Fancy.domain( Person, {
+                taschengeld: "number"
+            }, {}, {
+                fullName: function( $super ) {
+                    return this.firstName;
+                }
+            } );
+            var Baby = Fancy.domain( Child, {
+                weight: "number"
+            }, {}, {
+                fullName: function( $super ) {
+                    return "unknown";
+                }
+            } );
+
+            var me = new Person( {
+                lastName : "Ahrweiler",
+                firstName: "Markus"
+            } );
+            var meC = new Child( {
+                lastName : "Ahrweiler",
+                firstName: "Markus"
+            } );
+            var meB = new Baby( {
+                lastName : "Ahrweiler",
+                firstName: "Markus"
+            } );
+        </script>
+    </body>
+</html>
