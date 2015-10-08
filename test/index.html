@@ -15,38 +15,29 @@
             }, {
                 fullName: function() {
                     return this.firstName + " " + this.lastName;
-                },
-                test    : function() {
-                    return "test";
                 }
             } );
             var Child = Fancy.domain( Person, {
-                taschengeld: "number"
-            }, {}, {
+                taschengeld: "double"
+            }, { taschengeld: { "defaultValue": 5, nullable: true } }, {
                 fullName: function( $super ) {
                     return this.firstName;
                 }
             } );
             var Baby = Fancy.domain( Child, {
                 weight: "number"
-            }, {}, {
-                fullName: function( $super ) {
-                    return "unknown";
-                }
-            } );
+            }, { weight: { nullable: false } } );
 
-            var me = new Person( {
+            var persons = [ new Person( {
                 lastName : "Ahrweiler",
                 firstName: "Markus"
-            } );
-            var meC = new Child( {
+            } ), new Child( {
                 lastName : "Ahrweiler",
                 firstName: "Markus"
-            } );
-            var meB = new Baby( {
+            } ), new Baby( {
                 lastName : "Ahrweiler",
                 firstName: "Markus"
-            } );
+            } ) ];
         </script>
     </body>
 </html>

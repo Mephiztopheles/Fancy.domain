@@ -16,7 +16,7 @@
     function addMethods( functions, fn ) {
         var $super = fn.parent && fn.parent.prototype;
         each( functions, function( value, property ) {
-            if( $super && typeof value === "function" ) {
+            if( $super && Fancy.getType( value ) === "function" ) {
                 var method = value;
                 value      = (function( m ) {
                     return function() { return $super[ m ].apply( this, arguments ); };
@@ -37,7 +37,7 @@
     }
 
     function each( obj, callback ) {
-        if( obj instanceof Array ) {
+        if( Fancy.getType( obj ) === "array" ) {
             if( Array.prototype.forEach ) {
                 obj.forEach( callback );
             } else {
@@ -47,7 +47,7 @@
                     }
                 }
             }
-        } else if( obj instanceof Object ) {
+        } else if( Fancy.getType( obj ) === "object" ) {
             for( var i in obj ) {
                 callback( obj[ i ], i );
             }
@@ -56,6 +56,7 @@
 
     function extend( a ) {
         var args = argumentToArray( arguments );
+        args.shift();
         each( args, function( it ) {
             for( var i in it ) {
                 a[ i ] = it[ i ];
@@ -68,7 +69,7 @@
 
     function Domain( name, data, options, functions ) {
         var parent = null;
-        if( typeof name === "function" ) {
+        if( Fancy.getType( name ) === "function" ) {
             parent = name;
         } else {
             functions = options;
@@ -83,39 +84,72 @@
         Superclass.parent                = parent;
         Superclass.subclasses            = [];
         Superclass.$properties           = {};
+        Superclass.$constraints          = {};
 
-        each( data, function( it, i ) {
-            if( typeof it === "string" ) {
-                switch( it.toLowerCase() ) {
-                    case "number":
-                    case "integer":
-                        Superclass.$properties[ i ] = 0;
-                        break;
-                    case "double":
-                    case "float":
-                        Superclass.$properties[ i ] = 0.0;
-                        break;
-                    case "array":
-                    case "list":
-                        Superclass.$properties[ i ] = [];
-                        break;
-                    case "object":
-                    case "map":
-                        Superclass.$properties[ i ] = {};
-                        break;
-                    default:
-                        Superclass.$properties[ i ] = null;
-                        break;
+        if( options ) {
+            each( options, function( it, i ) {
+                Superclass.$constraints[ i ] = it;
+            } );
+
+        }
+        if( data ) {
+            each( data, function( it, i ) {
+                var cons = Superclass.$constraints[ i ] || {};
+                if( Fancy.getType( it ) === "string" ) {
+                    switch( it.toLowerCase() ) {
+                        case "number":
+                        case "integer":
+                            if( Fancy.getType( cons.defaultValue ) === "number" ) {
+                                Superclass.$properties[ i ] = cons.defaultValue;
+                            } else {
+                                Superclass.$properties[ i ] = 0;
+                            }
+                            break;
+                        case "double":
+                        case "float":
+                            if( Fancy.getType( cons.defaultValue ) === "number" ) {
+                                Superclass.$properties[ i ] = cons.defaultValue;
+                            } else {
+                                Superclass.$properties[ i ] = 0.0;
+                            }
+                            break;
+                        case "array":
+                        case "list":
+                            if( Fancy.getType( cons.defaultValue ) === "array" ) {
+                                Superclass.$properties[ i ] = cons.defaultValue;
+                            } else {
+                                Superclass.$properties[ i ] = 0.0;
+                            }
+                            break;
+                        case "object":
+                        case "map":
+                            if( Fancy.getType( cons.defaultValue ) === "object" ) {
+                                Superclass.$properties[ i ] = cons.defaultValue;
+                            } else {
+                                Superclass.$properties[ i ] = 0.0;
+                            }
+                            break;
+                        default:
+                            if( cons.defaultValue !== undefined ) {
+                                Superclass.$properties[ i ] = cons.defaultValue;
+                            } else {
+                                Superclass.$properties[ i ] = null;
+                            }
+                            break;
+                    }
+                } else {
+                    Superclass.$properties[ i ] = null;
                 }
-            } else {
-                Superclass.$properties[ i ] = null;
-            }
-        } );
+            } );
+        } else {
+            console.warn( "No properties?" );
+        }
         if( parent ) {
             Subclass.prototype   = parent.prototype;
             Superclass.prototype = new Subclass;
             parent.subclasses.push( Superclass );
             extend( Superclass.$properties, parent.$properties );
+            extend( Superclass.$constraints, parent.$constraints );
         }
         function init( object ) {
             if( object ) {
