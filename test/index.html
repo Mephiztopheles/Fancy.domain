@@ -13,14 +13,14 @@
                 lastName : "string",
                 firstName: "string"
             }, {
-                fullName: function() {
+                fullName: function () {
                     return this.firstName + " " + this.lastName;
                 }
             } );
             var Child = Fancy.domain( Person, {
                 taschengeld: "double"
             }, { taschengeld: { "defaultValue": 5, nullable: true } }, {
-                fullName: function( $super ) {
+                fullName: function ( $super ) {
                     return this.firstName;
                 }
             } );
@@ -36,7 +36,8 @@
                 firstName: "Markus"
             } ), new Baby( {
                 lastName : "Ahrweiler",
-                firstName: "Markus"
+                firstName: "Markus",
+                weight   : 300
             } ) ];
         </script>
     </body>
