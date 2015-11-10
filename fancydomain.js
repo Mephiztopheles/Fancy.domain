@@ -181,6 +181,9 @@
         };
 
         function Superclass( object ) {
+            if ( !(this instanceof Superclass) ) {
+                return new Superclass( object );
+            }
             init.call( this, object );
             return this;
         }
