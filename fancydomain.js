@@ -81,6 +81,7 @@
 
     function Subclass() {}
 
+
     function Domain( name, data, options, functions ) {
         var parent = null;
         if ( Fancy.getType( name ) === "function" ) {
@@ -187,6 +188,16 @@
             init.call( this, object );
             return this;
         }
+
+
+        Superclass.valueOf = (function ( m ) {
+            return function () { return m.valueOf.call( m ); };
+        })( (function(){return new Superclass();}) );
+
+        Superclass.toString = (function ( m ) {
+            return function () { return m.toString.call( m ); };
+        })( (function(){return new Superclass();}) );
+
 
         addMethods( functions, Superclass );
         Superclass.prototype.constructor      = Superclass;
