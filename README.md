@@ -1,6 +1,6 @@
 # Fancy.domain
 
 ## Todo
- - add hasMany as definedProperty
+ - <s>add hasMany as definedProperty</s>
  - add mapping as option
- - merge constraints and s.o.
+ - <s>merge constraints and s.o.</s>

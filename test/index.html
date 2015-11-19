@@ -9,24 +9,49 @@
     <body>
 
         <script>
+            "use strict";
+            class Animal {
+                constructor( name ) {
+                    this.name = name;
+                }
+
+                speak() {
+                    console.log( this.name + ' makes a noise.' );
+                }
+            }
+
+            class Dog extends Animal {
+                speak() {
+                    super.speak();
+                    console.log( this.name + ' barks.' );
+                }
+            }
+
             var Person = Fancy.domain( {
                 lastName : "string",
                 firstName: "string"
             }, {
-                fullName: function () {
+                fullName: function() {
                     return this.firstName + " " + this.lastName;
                 }
             } );
             var Child = Fancy.domain( Person, {
                 taschengeld: "double"
             }, { taschengeld: { "defaultValue": 5, nullable: true } }, {
-                fullName: function ( $super ) {
+                fullName: function( $super ) {
                     return this.firstName;
                 }
             } );
             var Baby = Fancy.domain( Child, {
                 weight: "number"
             }, { weight: { nullable: false } } );
+
+
+            var Family = Fancy.domain( {
+                name: "string"
+            }, {
+                hasMany: { "members": Person }
+            } );
 
             var persons = [ new Person( {
                 lastName : "Ahrweiler",
@@ -39,6 +64,11 @@
                 firstName: "Markus",
                 weight   : 300
             } ) ];
+
+
+            var ahrweilers = Family( { name: "Ahrweiler" } );
+            ahrweilers.members.push( "lol" );
+
         </script>
     </body>
 </html>
