@@ -31,15 +31,22 @@
                 lastName : "string",
                 firstName: "string"
             }, {
-                fullName: function() {
-                    return this.firstName + " " + this.lastName;
+                methods: {
+                    fullName: function () {
+                        return this.firstName + " " + this.lastName;
+                    }
                 }
             } );
             var Child = Fancy.domain( Person, {
                 taschengeld: "double"
-            }, { taschengeld: { "defaultValue": 5, nullable: true } }, {
-                fullName: function( $super ) {
-                    return this.firstName;
+            }, {
+                constraints: {
+                    taschengeld: { "defaultValue": 5, nullable: true }
+                },
+                methods    : {
+                    fullName: function ( $super ) {
+                        return this.firstName;
+                    }
                 }
             } );
             var Baby = Fancy.domain( Child, {
