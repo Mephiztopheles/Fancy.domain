@@ -1,12 +1,12 @@
 (function ( Fancy ) {
-   /* extend( Function.prototype, {
-        wrap: function wrap( wrapper ) {
-            var fn = this;
-            return function () {
-                return wrapper.apply( this, [ fn.bind( this ) ].concat( Array.prototype.slice.call( arguments ) ) );
-            }
-        }
-    } );*/
+    /* extend( Function.prototype, {
+         wrap: function wrap( wrapper ) {
+             var fn = this;
+             return function () {
+                 return wrapper.apply( this, [ fn.bind( this ) ].concat( Array.prototype.slice.call( arguments ) ) );
+             }
+         }
+     } );*/
 
     function wrap( fn, wrapper ) {
         return function () {
@@ -237,3 +237,85 @@
 
     Fancy.domain = Domain;
 })( Fancy );
+
+
+function createDomain( properties ) {
+    function Domain( props ) {
+        for ( var i in properties ) {
+            if ( properties.hasOwnProperty( i ) ) {
+                setProperty( this, i, properties[ i ], props ? (props[ i ] || null) : null );
+            }
+        }
+
+    }
+
+    Domain.constraints = {};
+
+    function getName() {
+        return "class " + Domain.class;
+    }
+
+
+    setTimeout( function () {
+        if ( Domain.constraints ) {
+            for ( var i in Domain.constraints ) {
+                if ( Domain.constraints.hasOwnProperty( i ) ) {
+                    if ( Domain.constraints[ i ].static ) {
+                        Domain[ i ] = Domain.constraints[ i ].default;
+                    }
+                }
+            }
+        }
+    }, 1 );
+    function ensureValue( value, name, old ) {
+        var constraints = Domain.constraints[ name ];
+        if ( constraints ) {
+            var type, nullable;
+            if ( constraints.hasOwnProperty( "nullable" ) ) {
+                if ( constraints.nullable === false ) {
+                    nullable = value !== null;
+                } else {
+                    nullable = true;
+                }
+            }
+            if ( constraints.hasOwnProperty( "type" ) ) {
+                type = Fancy.getType( value ).toLowerCase() === constraints.type.toLowerCase();
+            }
+            if ( type && nullable ) {
+                return value;
+            } else {
+                return old;
+            }
+        }
+        return value;
+    }
+
+    function setProperty( me, name, type, givenValue ) {
+        if ( !Domain.constraints[ name ] ) {
+            Domain.constraints[ name ] = {};
+        }
+        Domain.constraints[ name ].type = type;
+        var value = Domain.constraints[ name ].default || givenValue;
+        Object.defineProperty( me, name, {
+            get         : function () {
+                return value
+            },
+            set         : function ( v ) {
+                return ensureValue( v, name, value );
+            },
+            enumerable  : true,
+            configurable: false
+        } )
+    }
+
+    return Domain;
+}
+
+var Horse = createDomain( { "class": "String", id: "Number", "name": "String" } );
+
+Horse.constraints = {
+    "class": {
+        "default": "de.proequi.horse.Horse",
+        "static" : true
+    }
+};
