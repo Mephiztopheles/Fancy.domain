@@ -239,36 +239,33 @@
 })( Fancy );
 
 
-function createDomain( properties ) {
+function createDomain() {
     function Domain( props ) {
-        for ( var i in properties ) {
-            if ( properties.hasOwnProperty( i ) ) {
-                setProperty( this, i, properties[ i ], props ? (props[ i ] || null) : null );
+        for ( var i in Domain.properties ) {
+            if ( Domain.properties.hasOwnProperty( i ) ) {
+                setProperty( this, i, Domain.properties[ i ], props ? (props[ i ] || null) : null );
             }
         }
-
+        if ( Domain.transients ) {
+            for ( i in Domain.transients ) {
+                if ( Domain.transients.hasOwnProperty( i ) ) {
+                    Object.defineProperty( this, i, { get: Domain.transients[ i ], enumerable: false } );
+                }
+            }
+        }
+        if ( Domain.hasMany ) {
+            for ( i in Domain.hasMany ) {
+                if ( Domain.hasMany.hasOwnProperty( i ) ) {
+                    setHasMany( this, i, Domain.hasMany[ i ] );
+                }
+            }
+        }
     }
 
     Domain.constraints = {};
 
-    function getName() {
-        return "class " + Domain.class;
-    }
-
-
-    setTimeout( function () {
-        if ( Domain.constraints ) {
-            for ( var i in Domain.constraints ) {
-                if ( Domain.constraints.hasOwnProperty( i ) ) {
-                    if ( Domain.constraints[ i ].static ) {
-                        Domain[ i ] = Domain.constraints[ i ].default;
-                    }
-                }
-            }
-        }
-    }, 1 );
     function ensureValue( value, name, old ) {
-        var constraints = Domain.constraints[ name ];
+        var constraints = Domain.constraints && Domain.constraints[ name ];
         if ( constraints ) {
             var type, nullable;
             if ( constraints.hasOwnProperty( "nullable" ) ) {
@@ -277,10 +274,18 @@ function createDomain( properties ) {
                 } else {
                     nullable = true;
                 }
+            } else {
+                nullable = true;
             }
             if ( constraints.hasOwnProperty( "type" ) ) {
-                type = Fancy.getType( value ).toLowerCase() === constraints.type.toLowerCase();
+                if ( Fancy.getType( constraints.type ) === "string" ) {
+                    type = Fancy.getType( value ).toLowerCase() === constraints.type.toLowerCase();
+                } else {
+                    console.log( value, constraints.type );
+                    type = value instanceof constraints.type;
+                }
             }
+            console.log( type, nullable );
             if ( type && nullable ) {
                 return value;
             } else {
@@ -295,27 +300,113 @@ function createDomain( properties ) {
             Domain.constraints[ name ] = {};
         }
         Domain.constraints[ name ].type = type;
-        var value = Domain.constraints[ name ].default || givenValue;
+        var value                       = Domain.constraints[ name ].default || givenValue;
+        if ( !Domain.constraints[ name ].nullable && value === null ) {
+            if ( Fancy.getType( type ) === "string" ) {
+                switch ( type.toLowerCase() ) {
+                    case "string":
+                        value = "";
+                        break;
+                    case "number":
+                        value = 0;
+                        break;
+                    case "array":
+                        value = [];
+                        break;
+                    case "object":
+                        value = {};
+                        break;
+                    case "boolean":
+                        value = false;
+                        break;
+                }
+            }
+        }
         Object.defineProperty( me, name, {
             get         : function () {
                 return value
             },
             set         : function ( v ) {
-                return ensureValue( v, name, value );
+                var ensured = ensureValue( v, name, value );
+                value       = ensured;
+                return ensured;
             },
             enumerable  : true,
             configurable: false
         } )
     }
 
+    function setHasMany( me, name, instance ) {
+        var value = new OArray();
+
+        function OArray( items ) {
+
+        }
+
+        Object.getOwnPropertyNames( Array.prototype ).forEach( function ( name ) {
+            var prop = Object.getOwnPropertyDescriptor( Array.prototype, name );
+            if ( Fancy.getType( prop.value ) === "function" ) {
+                Object.defineProperty( OArray.prototype, name, {
+                    configurable: prop.configurable,
+                    enumerable  : prop.enumerable,
+                    value       : function () {
+                        console.log( "called", name );
+                        return prop.value.apply( this, arguments );
+                    },
+                    writable    : prop.writable
+                } )
+            }
+        } );
+        Object.defineProperty( me, name, {
+            get: function () {
+                return value;
+            }
+        } );
+        var splice   = Array.prototype.splice;
+        value.splice = function () {
+            console.log( "splice" )
+            return splice.call( this, arguments );
+        }
+    }
+
     return Domain;
 }
+function bootStrapDomain( Domain ) {
+    var i;
+    if ( Domain.constraints ) {
+        for ( i in Domain.constraints ) {
+            if ( Domain.constraints.hasOwnProperty( i ) ) {
+                if ( Domain.constraints[ i ].static ) {
+                    Domain[ i ] = Domain.constraints[ i ].default;
+                }
+            }
+        }
+    }
+}
 
-var Horse = createDomain( { "class": "String", id: "Number", "name": "String" } );
-
+var Horse         = createDomain();
+Horse.properties  = {
+    "class"             : "String",
+    id                  : "Number",
+    "name"              : "String",
+    identificationNumber: "string",
+    mother              : Horse
+};
 Horse.constraints = {
     "class": {
         "default": "de.proequi.horse.Horse",
         "static" : true
+    },
+    "id"   : {
+        nullable: true
     }
 };
+Horse.transients  = {
+    displayName: function () {
+        return this.name || this.identificationNumber;
+    }
+};
+Horse.hasMany     = {
+    childs: Horse
+};
+bootStrapDomain( Horse );
