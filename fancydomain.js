@@ -263,6 +263,19 @@ function createDomain() {
     }
 
     Domain.constraints = {};
+    Domain.prototype   = {};
+    Object.defineProperty( Domain.prototype, "save", {
+        enumerable  : false,
+        value       : function () {},
+        configurable: false,
+        writable    : true
+    } );
+    Object.defineProperty( Domain.prototype, "delete", {
+        enumerable  : false,
+        value       : function () {},
+        configurable: false,
+        writable    : true
+    } );
 
     function ensureValue( value, name, old ) {
         var constraints = Domain.constraints && Domain.constraints[ name ];
@@ -336,37 +349,19 @@ function createDomain() {
         } )
     }
 
-    function setHasMany( me, name, instance ) {
-        var value = new OArray();
-
-        function OArray( items ) {
-
-        }
-
-        Object.getOwnPropertyNames( Array.prototype ).forEach( function ( name ) {
-            var prop = Object.getOwnPropertyDescriptor( Array.prototype, name );
-            if ( Fancy.getType( prop.value ) === "function" ) {
-                Object.defineProperty( OArray.prototype, name, {
-                    configurable: prop.configurable,
-                    enumerable  : prop.enumerable,
-                    value       : function () {
-                        console.log( "called", name );
-                        return prop.value.apply( this, arguments );
-                    },
-                    writable    : prop.writable
-                } )
-            }
-        } );
+    function setHasMany( me, name ) {
+        var value = [];
         Object.defineProperty( me, name, {
             get: function () {
                 return value;
+            },
+            set: function ( val ) {
+                if ( Fancy.getType( val ) === "array" ) {
+                    return val;
+                }
+                return value;
             }
         } );
-        var splice   = Array.prototype.splice;
-        value.splice = function () {
-            console.log( "splice" )
-            return splice.call( this, arguments );
-        }
     }
 
     return Domain;
