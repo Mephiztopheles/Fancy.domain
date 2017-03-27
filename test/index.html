@@ -2,79 +2,67 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <script src="../bower_components/fancy/fancy.min.js"></script>
-        <script src="../fancydomain.js"></script>
         <title></title>
+        <script src="../Domain.js"></script>
     </head>
     <body>
 
         <script>
-            "use strict";
             class Animal {
-                constructor( name ) {
-                    this.name = name;
+                constructor( data ) {
+                    this.$constructor( data );
                 }
 
-                speak() {
-                    console.log( this.name + ' makes a noise.' );
-                }
+                $constructor( data ) {}
+
             }
-
-            class Dog extends Animal {
-                speak() {
-                    super.speak();
-                    console.log( this.name + ' barks.' );
-                }
-            }
-
-            var Person = Fancy.domain( {
-                lastName : "string",
-                firstName: "string"
-            }, {
-                methods: {
-                    fullName: function () {
-                        return this.firstName + " " + this.lastName;
-                    }
-                }
-            } );
-            var Child = Fancy.domain( Person, {
-                taschengeld: "double"
-            }, {
-                constraints: {
-                    taschengeld: { "defaultValue": 5, nullable: true }
+            Animal.$constraints = {
+                name    : {
+                    type    : String,
+                    nullable: false
                 },
-                methods    : {
-                    fullName: function ( $super ) {
-                        return this.firstName;
+                age     : {
+                    type    : Number,
+                    nullable: false,
+                    max     : 20,
+                    min     : 0
+                },
+                birthDay: {
+                    type: Date
+                }
+            };
+            Animal.class        = "de.proequi.animals.Animal";
+            Animal.$transients  = {
+                info: {
+                    get: function () {
+                        return `${this.name} (${this.age})`;
                     }
                 }
+            };
+            class Dog extends Animal {
+                constructor( data ) {
+                    super( data );
+                }
+            }
+            Dog.class = "de.proequi.animals.Dog";
+
+
+            Dog.$constraints.father = {
+                type     : Animal,
+                nullable : true,
+                validator: function ( value ) {return value.age > this.age}
+            };
+            // delete  Domain.config.properties.id;
+            new Domain( Animal );
+            new Domain( Dog );
+
+
+            var dog = new Dog( {
+                name    : "Sparky",
+                birthDay: new Date().getTime(),
+                father  : new Dog( { age: 8 } )
             } );
-            var Baby = Fancy.domain( Child, {
-                weight: "number"
-            }, { weight: { nullable: false } } );
-
-
-            var Family = Fancy.domain( {
-                name: "string"
-            }, {
-                hasMany: { "members": Person }
-            } );
-
-            var persons = [ new Person( {
-                lastName : "Ahrweiler",
-                firstName: "Markus"
-            } ), new Child( {
-                lastName : "Ahrweiler",
-                firstName: "Markus"
-            } ), new Baby( {
-                lastName : "Ahrweiler",
-                firstName: "Markus",
-                weight   : 300
-            } ) ];
-
-            console.log( "Familie: ahrweilers", "Personen: persons" );
-            var ahrweilers = Family( { name: "Ahrweiler" } );
-            ahrweilers.members.push( "lol" );
+            dog.age = 5;
 
         </script>
     </body>

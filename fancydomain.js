@@ -171,7 +171,7 @@
             Superclass.prototype = new Subclass;
             parent.$subclasses.push( Superclass );
             extend( Superclass.$properties, parent.$properties );
-            extend( Superclass.$constraints, parent.$constraints );
+            extend( Superclass.$constraints, Dog.$constraints );
         }
         function init( object ) {
             var SELF = this;
@@ -381,11 +381,11 @@ function bootStrapDomain( Domain ) {
 
 var Horse         = createDomain();
 Horse.properties  = {
-    "class"             : "String",
-    id                  : "Number",
-    "name"              : "String",
-    identificationNumber: "string",
-    mother              : Horse
+    "class"               : "String",
+    "id"                  : "Number",
+    "name"                : "String",
+    "identificationNumber": "string",
+    "mother"              : Horse
 };
 Horse.constraints = {
     "class": {
@@ -405,3 +405,21 @@ Horse.hasMany     = {
     childs: Horse
 };
 bootStrapDomain( Horse );
+
+
+function Dog( params ) {
+    console.log( params );
+}
+
+function create( Domain ) {
+    var prototype    = Domain.prototype,
+        constructor  = prototype.constructor;
+    Domain           = function () {
+        constructor.call( this, arguments );
+        console.log( arguments );
+    };
+    Domain.prototype = prototype;
+    return Domain;
+}
+
+Dog = create( Dog );
